@@ -1,4 +1,10 @@
 defmodule Todo.Cache do
+  @moduledoc """
+  Хранит коллекцию серверов для работы со списками задач.
+  Отвечает за создание серверных процессов и их обнаружение.
+  Является точкой входа.
+  """
+
   use GenServer
 
   @impl GenServer
@@ -11,16 +17,17 @@ defmodule Todo.Cache do
     case Map.fetch(servers, server_name) do
       {:ok, server} -> {:reply, server, servers}
       :error ->
-        {:ok, server} = Todo.Server.start()
+        {:ok, server} = Todo.Server.start(server_name)
         {:reply, server, Map.put(servers, server_name, server)}
     end
   end
 
-  def start do
-    GenServer.start(__MODULE__, nil)
+  def start_link(_) do
+    IO.puts("Cache Started")
+    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
-  def process(cache_pid, server_name) do
-    GenServer.call(cache_pid, {:process, server_name})
+  def process(server_name) do
+    GenServer.call(__MODULE__, {:process, server_name})
   end
 end
